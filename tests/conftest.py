@@ -28,7 +28,7 @@ def app():
     """Create and configure a Flask app instance for testing."""
     if not HAS_APP_FACTORY:
         pytest.skip("Flask app factory not yet implemented")
-    app = create_app({'TESTING': True, 'SECRET_KEY': 'test-secret-key'})
+    app = create_app({'TESTING': True, 'SECRET_KEY': 'test-secret-key', 'DEFAULT_FDPS': []})
     yield app
 
 

@@ -1,6 +1,7 @@
 """Dataset Service for aggregating and filtering datasets."""
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import List, Dict, Any
 
@@ -44,8 +45,8 @@ class DatasetService:
         """
         Fetch all datasets from the given FDPs.
 
-        Optimized to extract dataset metadata from catalog RDF instead of
-        making individual requests for each dataset.
+        Fetches FDPs concurrently, then fetches all discovered catalogs
+        concurrently to minimise total wait time.
 
         Args:
             fdp_uris: List of FDP URIs to fetch from.
@@ -53,24 +54,42 @@ class DatasetService:
         Returns:
             List of all datasets from all FDPs.
         """
+        # Step 1: fetch all FDPs concurrently to discover catalogs
+        catalog_tasks = []  # list of (catalog_uri, fdp_uri, fdp_title)
+
+        def _fetch_fdp(uri):
+            try:
+                return self.fdp_client.fetch_fdp(uri)
+            except FDPError as e:
+                logger.warning(f"Failed to fetch FDP {uri}: {e}")
+                return None
+
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            futures = {pool.submit(_fetch_fdp, uri): uri for uri in fdp_uris}
+            for future in as_completed(futures):
+                fdp = future.result()
+                if fdp:
+                    logger.info(f"Fetching datasets from {len(fdp.catalogs)} catalogs in {fdp.title}")
+                    for catalog_uri in fdp.catalogs:
+                        catalog_tasks.append((catalog_uri, fdp.uri, fdp.title))
+
+        # Step 2: fetch all catalogs concurrently
         datasets = []
 
-        for fdp_uri in fdp_uris:
+        def _fetch_catalog(task):
+            catalog_uri, fdp_uri, fdp_title = task
             try:
-                fdp = self.fdp_client.fetch_fdp(fdp_uri)
-                logger.info(f"Fetching datasets from {len(fdp.catalogs)} catalogs in {fdp.title}")
-
-                for catalog_uri in fdp.catalogs:
-                    try:
-                        # Use optimized method that extracts datasets from catalog RDF
-                        catalog_datasets = self.fdp_client.fetch_catalog_with_datasets(
-                            catalog_uri, fdp_uri, fdp.title
-                        )
-                        datasets.extend(catalog_datasets)
-                    except FDPError as e:
-                        logger.warning(f"Failed to fetch catalog {catalog_uri}: {e}")
+                return self.fdp_client.fetch_catalog_with_datasets(
+                    catalog_uri, fdp_uri, fdp_title
+                )
             except FDPError as e:
-                logger.warning(f"Failed to fetch FDP {fdp_uri}: {e}")
+                logger.warning(f"Failed to fetch catalog {catalog_uri}: {e}")
+                return []
+
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            futures = {pool.submit(_fetch_catalog, t): t for t in catalog_tasks}
+            for future in as_completed(futures):
+                datasets.extend(future.result())
 
         logger.info(f"Total datasets fetched: {len(datasets)}")
         return datasets

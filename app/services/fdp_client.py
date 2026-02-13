@@ -1,6 +1,7 @@
 """FDP Client for fetching and parsing FAIR Data Point metadata."""
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Optional, List
 
@@ -328,41 +329,65 @@ class FDPClient:
                     dataset_uris.add(str(ds_uri))
 
         # Extract metadata for each dataset from the catalog graph
+        needs_fetch = []
         for ds_uri_str in dataset_uris:
             ds_uri = URIRef(ds_uri_str)
 
-            # Essential fields only
-            title = self._get_literal_value(graph, ds_uri, DCT.title) or ds_uri_str
-            description = self._get_literal_value(graph, ds_uri, DCT.description)
-            publisher = self._get_literal_value(graph, ds_uri, DCT.publisher)
-            creator = self._get_literal_value(graph, ds_uri, DCT.creator)
-            themes = self._get_uri_list(graph, ds_uri, DCAT.theme)
-            keywords = []
-            for kw in graph.objects(ds_uri, DCAT.keyword):
-                keywords.append(str(kw))
+            # Try to extract metadata from the catalog graph (inline)
+            title = self._get_literal_value(graph, ds_uri, DCT.title)
 
-            # Contact point
-            contact_point = self._extract_contact_point(graph, ds_uri)
+            if title:
+                # Catalog has inline metadata — use it
+                description = self._get_literal_value(graph, ds_uri, DCT.description)
+                publisher = self._get_literal_value(graph, ds_uri, DCT.publisher)
+                creator = self._get_literal_value(graph, ds_uri, DCT.creator)
+                themes = self._get_uri_list(graph, ds_uri, DCAT.theme)
+                keywords = []
+                for kw in graph.objects(ds_uri, DCAT.keyword):
+                    keywords.append(str(kw))
+                contact_point = self._extract_contact_point(graph, ds_uri)
+                landing_page = self._get_literal_value(graph, ds_uri, DCAT.landingPage)
 
-            # Landing page
-            landing_page = self._get_literal_value(graph, ds_uri, DCAT.landingPage)
+                dataset = Dataset(
+                    uri=ds_uri_str,
+                    title=title,
+                    catalog_uri=catalog_uri,
+                    catalog_title=catalog_title,
+                    fdp_uri=fdp_uri,
+                    fdp_title=fdp_title,
+                    description=description,
+                    publisher=publisher,
+                    creator=creator,
+                    themes=themes,
+                    keywords=keywords,
+                    contact_point=contact_point,
+                    landing_page=landing_page,
+                )
+                datasets.append(dataset)
+            else:
+                needs_fetch.append(ds_uri_str)
 
-            dataset = Dataset(
-                uri=ds_uri_str,
-                title=title,
-                catalog_uri=catalog_uri,
-                catalog_title=catalog_title,  # Add catalog title for context
-                fdp_uri=fdp_uri,
-                fdp_title=fdp_title,
-                description=description,
-                publisher=publisher,
-                creator=creator,
-                themes=themes,
-                keywords=keywords,
-                contact_point=contact_point,
-                landing_page=landing_page,
-            )
-            datasets.append(dataset)
+        # Fetch datasets without inline metadata concurrently
+        if needs_fetch:
+            logger.info(f"Fetching {len(needs_fetch)} datasets individually (no inline metadata)")
+
+            def _fetch_one(uri: str) -> Dataset:
+                try:
+                    ds = self.fetch_dataset(uri, catalog_uri, fdp_uri, fdp_title)
+                    ds.catalog_title = catalog_title
+                    return ds
+                except FDPError as e:
+                    logger.warning(f"Failed to fetch dataset {uri}: {e}")
+                    return Dataset(
+                        uri=uri, title=uri,
+                        catalog_uri=catalog_uri, catalog_title=catalog_title,
+                        fdp_uri=fdp_uri, fdp_title=fdp_title,
+                    )
+
+            with ThreadPoolExecutor(max_workers=5) as pool:
+                futures = {pool.submit(_fetch_one, uri): uri for uri in needs_fetch}
+                for future in as_completed(futures):
+                    datasets.append(future.result())
 
         logger.info(f"Extracted {len(datasets)} datasets from catalog {catalog_uri}")
         return datasets

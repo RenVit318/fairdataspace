@@ -14,6 +14,7 @@ def app():
         'TESTING': True,
         'SECRET_KEY': 'test-secret-key',
         'WTF_CSRF_ENABLED': False,
+        'DEFAULT_FDPS': [],
     })
     yield app
 
