@@ -16,3 +16,9 @@ def index():
         fdp_count=fdp_count,
         basket_count=basket_count,
     )
+
+
+@main_bp.route('/about')
+def about():
+    """Render the about page."""
+    return render_template('about.html')
