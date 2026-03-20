@@ -4,20 +4,15 @@
 
 {% block content %}
 <div class="hero">
-    <h1>Humanitarian Data Space</h1>
+    <h1>{{ page.hero_title }}</h1>
     <p class="hero-subtitle">
-        Find, explore, and request access to humanitarian datasets &mdash; all in one place
+        {{ page.hero_subtitle }}
     </p>
 </div>
 
 <section class="intro">
-    <h2>What does this platform do?</h2>
-    <p>
-        The Humanitarian Data Space helps researchers and humanitarian organizations discover
-        datasets that are relevant to their work. Many valuable datasets exist across different
-        data repositories, but finding and accessing them can be difficult. This platform
-        brings them together so you can:
-    </p>
+    <h2>{{ page.intro_title }}</h2>
+    <p>{{ page.intro_body }}</p>
     <ul>
         <li><strong>Search across multiple data sources</strong> &mdash; connect to data repositories and see all available datasets in one overview</li>
         <li><strong>Filter and explore</strong> &mdash; narrow down datasets by topic, keyword, or data provider</li>
@@ -27,24 +22,24 @@
 </section>
 
 <section class="quick-start">
-    <h2>How it works</h2>
+    <h2>{{ page.steps_title }}</h2>
     <div class="steps">
         <div class="step">
             <div class="step-number">1</div>
-            <h3>Connect to a data source</h3>
-            <p>Add the URL of a data repository. The platform will automatically discover all datasets it contains.</p>
-            <a href="{{ url_for('fdp.add') }}" class="btn btn-primary">Add data source</a>
+            <h3>{{ page.step1_title }}</h3>
+            <p>{{ page.step1_body }}</p>
+            <a href="{{ url_for('datasets.browse') }}" class="btn btn-primary">Browse datasets</a>
         </div>
         <div class="step">
             <div class="step-number">2</div>
-            <h3>Find relevant datasets</h3>
-            <p>Browse, search, and filter the discovered datasets to find the ones that match your needs.</p>
+            <h3>{{ page.step2_title }}</h3>
+            <p>{{ page.step2_body }}</p>
             <a href="{{ url_for('datasets.browse') }}" class="btn btn-secondary">Browse datasets</a>
         </div>
         <div class="step">
             <div class="step-number">3</div>
-            <h3>Request or query</h3>
-            <p>Add datasets to your basket and compose a data access request, or run queries directly on available endpoints.</p>
+            <h3>{{ page.step3_title }}</h3>
+            <p>{{ page.step3_body }}</p>
             <a href="{{ url_for('request.basket') }}" class="btn btn-secondary">View basket</a>
         </div>
     </div>
