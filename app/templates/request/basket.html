@@ -27,35 +27,53 @@
             </div>
             {% endif %}
 
-            {% for email, items in by_contact.items() %}
-            <div class="contact-group">
-                <h3 class="contact-email">
-                    {% if email == 'No contact email' %}
-                    <span class="text-warning">No contact email available</span>
-                    {% else %}
-                    Contact: {{ email }}
+            {% for key, app in by_application.items() %}
+            <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color);">
+                <div class="card-header">
+                    <span class="card-title">
+                        {{ app.label }}
+                        <span class="form-hint" style="display: inline;">
+                            &middot; {{ app.item_count }} dataset{{ 's' if app.item_count != 1 else '' }}{% if app.fdp_count %}, {{ app.fdp_count }} FDP{{ 's' if app.fdp_count != 1 else '' }}{% endif %}
+                        </span>
+                    </span>
+                    {% if app.homepage %}
+                    <a href="{{ app.homepage }}" target="_blank" class="btn btn-sm btn-secondary" title="Application homepage">Homepage</a>
                     {% endif %}
-                </h3>
-
-                {% for item in items %}
-                <div class="dataset-card">
-                    <div class="card-header">
-                        <h4 class="dataset-title">{{ item.title }}</h4>
-                    </div>
-
-                    <div class="dataset-meta">
-                        <strong>FDP:</strong> {{ item.fdp_title }}
-                    </div>
-
-                    <div class="card-footer">
-                        <form action="{{ url_for('datasets.remove_from_basket', uri_hash=item.uri_hash) }}"
-                              method="POST" style="display: inline;">
-                            <input type="hidden" name="next" value="{{ url_for('request.basket') }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </div>
                 </div>
-                {% endfor %}
+
+                <div class="card-body">
+                    {% for email, items in app.contacts.items() %}
+                    <div class="contact-group">
+                        <h3 class="contact-email">
+                            {% if email == 'No contact email' %}
+                            <span class="text-warning">No contact email available</span>
+                            {% else %}
+                            Contact: {{ email }}
+                            {% endif %}
+                        </h3>
+
+                        {% for item in items %}
+                        <div class="dataset-card">
+                            <div class="card-header">
+                                <h4 class="dataset-title">{{ item.title }}</h4>
+                            </div>
+
+                            <div class="dataset-meta">
+                                <strong>FDP:</strong> {{ item.fdp_title }}
+                            </div>
+
+                            <div class="card-footer">
+                                <form action="{{ url_for('datasets.remove_from_basket', uri_hash=item.uri_hash) }}"
+                                      method="POST" style="display: inline;">
+                                    <input type="hidden" name="next" value="{{ url_for('request.basket') }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
             {% endfor %}
 

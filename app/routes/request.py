@@ -10,22 +10,61 @@ request_bp = Blueprint('request', __name__, url_prefix='/request')
 
 @request_bp.route('/')
 def basket():
-    """View current request basket."""
+    """View current request basket, grouped by application then by contact."""
     basket_items = session.get('basket', [])
 
-    # Group items by contact email for preview
-    by_contact = {}
+    # Outer grouping: application (catalog_homepage); inner: contact email.
+    # Application label = first catalog_title we see for that homepage, falling
+    # back to the homepage URL itself. Items without a homepage collect under
+    # a single "Other datasets" bucket so they still appear.
+    OTHER_KEY = '__other__'
+    by_application: dict = {}
+
+    for item in basket_items:
+        homepage = item.get('catalog_homepage')
+        if homepage:
+            key = homepage
+            label = item.get('catalog_title') or homepage
+        else:
+            key = OTHER_KEY
+            label = 'Other datasets'
+
+        bucket = by_application.setdefault(key, {
+            'label': label,
+            'homepage': homepage,
+            'fdps': set(),
+            'item_count': 0,
+            'contacts': {},  # email -> [items]
+        })
+
+        # Upgrade the label from the homepage URL to a real catalog title once we see one.
+        current_is_url = bucket['label'].startswith(('http://', 'https://'))
+        if current_is_url and item.get('catalog_title'):
+            bucket['label'] = item['catalog_title']
+        if item.get('fdp_title'):
+            bucket['fdps'].add(item['fdp_title'])
+        bucket['item_count'] += 1
+
+        contact = item.get('contact_point', {}) or {}
+        email = contact.get('email') or 'No contact email'
+        bucket['contacts'].setdefault(email, []).append(item)
+
+    # Convert the fdps set to a count for the template.
+    for bucket in by_application.values():
+        bucket['fdp_count'] = len(bucket['fdps'])
+        del bucket['fdps']
+
+    # Still expose flat by_contact — email composition downstream groups by contact.
+    by_contact: dict = {}
     for item in basket_items:
         contact = item.get('contact_point', {}) or {}
-        email = contact.get('email', 'No contact email')
-
-        if email not in by_contact:
-            by_contact[email] = []
-        by_contact[email].append(item)
+        email = contact.get('email') or 'No contact email'
+        by_contact.setdefault(email, []).append(item)
 
     return render_template(
         'request/basket.html',
         basket=basket_items,
+        by_application=by_application,
         by_contact=by_contact,
     )
 

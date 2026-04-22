@@ -211,6 +211,9 @@ def detail(uri_hash: str):
             dataset_dict['fdp_uri'],
             dataset_dict['fdp_title']
         )
+        # Restore catalog fields that fetch_dataset doesn't see.
+        dataset.catalog_title = dataset_dict.get('catalog_title')
+        dataset.catalog_homepage = dataset_dict.get('catalog_homepage')
         # Store discovered SPARQL endpoints in session for credential auto-population
         _store_discovered_endpoints(dataset)
     except Exception as e:
@@ -218,16 +221,81 @@ def detail(uri_hash: str):
         # Fallback to cached minimal data
         dataset = dataset_from_dict(dataset_dict)
 
+    # Find siblings — other cached datasets in the same application.
+    siblings_by_fdp: dict = {}
+    if dataset.catalog_homepage:
+        for d in datasets_dicts:
+            if d.get('catalog_homepage') != dataset.catalog_homepage:
+                continue
+            if d['uri'] == dataset.uri:
+                continue
+            fdp_title = d.get('fdp_title') or d.get('fdp_uri') or ''
+            siblings_by_fdp.setdefault(fdp_title, []).append({
+                'uri': d['uri'],
+                'uri_hash': get_uri_hash(d['uri']),
+                'title': d['title'],
+                'fdp_title': fdp_title,
+            })
+
     # Check if in basket
     basket = session.get('basket', [])
     in_basket = any(item['uri'] == dataset.uri for item in basket)
+    basket_uris = {item['uri'] for item in basket}
 
     return render_template(
         'datasets/detail.html',
         dataset=dataset,
         uri_hash=uri_hash,
         in_basket=in_basket,
+        siblings_by_fdp=siblings_by_fdp,
+        basket_uris=basket_uris,
     )
+
+
+@datasets_bp.route('/add-application-to-basket', methods=['POST'])
+def add_application_to_basket():
+    """Add every cached dataset with the given catalog_homepage to the basket."""
+    homepage = (request.form.get('homepage') or '').strip()
+    if not homepage:
+        flash('No application selected.', 'error')
+        return redirect(url_for('datasets.browse'))
+
+    datasets_dicts = get_cached_datasets()
+    basket = session.get('basket', [])
+    existing_uris = {item['uri'] for item in basket}
+
+    added = 0
+    for d in datasets_dicts:
+        if d.get('catalog_homepage') != homepage:
+            continue
+        if d['uri'] in existing_uris:
+            continue
+        uri_hash = get_uri_hash(d['uri'])
+        basket.append({
+            'uri': d['uri'],
+            'uri_hash': uri_hash,
+            'title': d['title'],
+            'fdp_title': d['fdp_title'],
+            'catalog_uri': d.get('catalog_uri'),
+            'catalog_title': d.get('catalog_title'),
+            'catalog_homepage': d.get('catalog_homepage'),
+            'contact_point': d.get('contact_point'),
+        })
+        existing_uris.add(d['uri'])
+        added += 1
+
+    session['basket'] = basket
+    session.modified = True
+
+    if added:
+        flash(f'Added {added} dataset(s) from this application to your basket.', 'success')
+    else:
+        flash('All datasets for this application are already in your basket.', 'info')
+
+    next_url = request.form.get('next') or request.referrer
+    if not next_url or not next_url.startswith('/') or next_url.startswith('//'):
+        next_url = url_for('datasets.browse')
+    return redirect(next_url)
 
 
 def _store_discovered_endpoints(dataset: Dataset) -> None:

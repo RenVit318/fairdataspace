@@ -32,6 +32,20 @@
                 <dt>FDP</dt>
                 <dd>{{ dataset.fdp_title }}</dd>
 
+                {% if dataset.catalog_title %}
+                <dt>Catalog</dt>
+                <dd>{{ dataset.catalog_title }}</dd>
+                {% endif %}
+
+                {% if dataset.catalog_homepage %}
+                <dt>Application</dt>
+                <dd>
+                    <a href="{{ dataset.catalog_homepage }}" target="_blank">{{ dataset.catalog_homepage }}</a>
+                    &middot;
+                    <a href="{{ url_for('datasets.browse', app=dataset.catalog_homepage) }}">view all in this application</a>
+                </dd>
+                {% endif %}
+
                 <dt>Dataset URI</dt>
                 <dd><a href="{{ dataset.uri }}" target="_blank">{{ dataset.uri }}</a></dd>
 
@@ -41,6 +55,44 @@
                 {% endif %}
             </dl>
         </div>
+
+        {% if siblings_by_fdp %}
+        <div class="detail-section">
+            <h3>Also in this application</h3>
+            <p class="dataset-description" style="margin-bottom: 0.75rem;">
+                This application has data on other FDPs too. Add them all to your basket in one click, or pick individually:
+            </p>
+            <form action="{{ url_for('datasets.add_application_to_basket') }}" method="POST" style="margin-bottom: 1rem;">
+                <input type="hidden" name="homepage" value="{{ dataset.catalog_homepage }}">
+                <input type="hidden" name="next" value="{{ request.url }}">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Add all {{ siblings_by_fdp.values()|map('length')|sum }} sibling dataset(s) to basket
+                </button>
+            </form>
+
+            {% for fdp_title, siblings in siblings_by_fdp.items() %}
+            <div class="contact-group" style="padding-bottom: 0.5rem;">
+                <div class="dataset-meta" style="margin-bottom: 0.5rem;">
+                    <strong>📁 {{ fdp_title }}</strong> ({{ siblings|length }} dataset{{ 's' if siblings|length != 1 else '' }})
+                </div>
+                {% for sib in siblings %}
+                <div class="dataset-summary">
+                    <a href="{{ url_for('datasets.detail', uri_hash=sib.uri_hash) }}">{{ sib.title }}</a>
+                    {% if sib.uri in basket_uris %}
+                    <span class="status-badge status-active" style="margin-left: 0.5rem;">In Basket</span>
+                    {% else %}
+                    <form action="{{ url_for('datasets.add_to_basket', uri_hash=sib.uri_hash) }}"
+                          method="POST" style="display: inline; margin-left: 0.5rem;">
+                        <input type="hidden" name="next" value="{{ request.url }}">
+                        <button type="submit" class="btn btn-sm btn-secondary">Add</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         {% if dataset.publisher or dataset.creator %}
         <div class="detail-section">
