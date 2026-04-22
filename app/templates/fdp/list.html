@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}FAIR Data Points - Humanitarian Data Space{% endblock %}
+{% block title %}FAIR Data Points - {{ site.name }}{% endblock %}
 
 {% block content %}
 <h1>FAIR Data Points</h1>
@@ -8,8 +8,8 @@
 <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color, #2563eb);">
     <div class="card-body">
         <p style="margin: 0;">
-            Want to add your FAIR Data Point to the Humanitarian Data Space?
-            Send a request to <a href="mailto:hds@eepa.be">hds@eepa.be</a> and we will review your submission.
+            Want to add your FAIR Data Point to the {{ site.name }}?
+            Send a request to <a href="mailto:{{ site.contact_email }}">{{ site.contact_email }}</a> and we will review your submission.
         </p>
     </div>
 </div>
@@ -81,7 +81,7 @@
         {% else %}
             <div class="empty-state">
                 <h3>No FDPs configured yet</h3>
-                <p>There are currently no FAIR Data Points connected to the Humanitarian Data Space.</p>
+                <p>There are currently no FAIR Data Points connected to the {{ site.name }}.</p>
             </div>
         {% endif %}
     </div>

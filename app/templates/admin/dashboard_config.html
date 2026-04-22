@@ -51,7 +51,7 @@
     <div class="card-body">
         <p style="margin-bottom: 1rem;">
             SPARQL endpoints are automatically discovered from the FAIR Data Points included in the
-            Humanitarian Data Space. The discovery runs daily alongside the dashboard refresh.
+            {{ site.name }}. The discovery runs daily alongside the dashboard refresh.
         </p>
 
         {% set discovered = config.endpoints | selectattr('discovered', 'defined') | selectattr('discovered') | list %}

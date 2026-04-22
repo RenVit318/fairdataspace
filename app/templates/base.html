@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Humanitarian Data Space{% endblock %}</title>
+    <title>{% block title %}{{ site.name }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('dataspace_static.static', filename='css/theme.css') }}">
 </head>
 <body>
     <header>
         <div class="logo-banner">
+            {% for logo in site.brand_logos %}
             <a href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='img/EEPA_Logo.jpeg') }}" alt="EEPA Logo" class="site-logo">
+                <img src="{{ url_for('dataspace_static.static', filename='img/' + logo.file) }}" alt="{{ logo.alt }}" class="site-logo">
             </a>
-            <a href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='img/VODAN_Logo.png') }}" alt="VODAN Logo" class="site-logo">
-            </a>
+            {% endfor %}
         </div>
         <nav class="navbar">
             <div class="nav-brand">
-                <a href="{{ url_for('main.index') }}">Humanitarian Data Space</a>
+                <a href="{{ url_for('main.index') }}">{{ site.name }}</a>
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
@@ -82,7 +82,7 @@
 
     <footer>
         <div class="container">
-            <p>Humanitarian Data Space &mdash; Discover and request access to humanitarian datasets</p>
+            <p>{{ site.name }} &mdash; {{ site.tagline }}</p>
         </div>
     </footer>
 

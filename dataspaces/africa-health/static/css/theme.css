@@ -1,0 +1,19 @@
+/* Africa Health Data Space — VODAN Africa theme */
+@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&family=Lato:wght@400;700&display=swap');
+
+:root {
+    --primary-color: #1d4798;
+    --primary-hover: #163a80;
+    --primary-light: #4a6fb0;
+    --primary-rgb: 29, 71, 152;
+
+    --accent-color: #f4c518;
+    --accent-hover: #d9ac10;
+    --accent-rgb: 244, 197, 24;
+
+    --heading-font: 'Maven Pro', 'Lato', sans-serif;
+    --body-font: 'Lato', Arial, Helvetica, sans-serif;
+
+    --gradient-primary: linear-gradient(135deg, #1d4798 0%, #2a5fb8 100%);
+    --gradient-accent: linear-gradient(135deg, #f4c518 0%, #f7d455 100%);
+}

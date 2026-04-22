@@ -1,0 +1,13 @@
+{
+  "hero_title": "Humanitarian Data Space",
+  "hero_subtitle": "Find, explore, and request access to humanitarian datasets — all in one place",
+  "intro_title": "What does this platform do?",
+  "intro_body": "The Humanitarian Data Space helps researchers and humanitarian organizations discover datasets that are relevant to their work. Many valuable datasets exist across different data repositories, but finding and accessing them can be difficult. This platform brings them together.",
+  "steps_title": "How it works",
+  "step1_title": "Connect to a data source",
+  "step1_body": "Add the URL of a data repository. The platform will automatically discover all datasets it contains.",
+  "step2_title": "Find relevant datasets",
+  "step2_body": "Browse, search, and filter the discovered datasets to find the ones that match your needs.",
+  "step3_title": "Request or query",
+  "step3_body": "Add datasets to your basket and compose a data access request, or run queries directly on available endpoints."
+}

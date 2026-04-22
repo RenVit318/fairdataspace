@@ -14,11 +14,12 @@ logger = logging.getLogger(__name__)
 _lock_file = None
 
 
-def _run_refresh():
+def _run_refresh(app):
     """Execute dashboard refresh (called by scheduler)."""
     from app.services.dashboard_service import refresh_all
     try:
-        refresh_all()
+        with app.app_context():
+            refresh_all()
     except Exception as e:
         logger.error(f'Scheduled dashboard refresh failed: {e}')
 
@@ -52,6 +53,7 @@ def init_scheduler(app):
         id='dashboard_refresh',
         replace_existing=True,
         next_run_time=datetime.now(),  # run immediately on startup
+        args=[app],
     )
     scheduler.start()
     logger.info(f'Dashboard scheduler started (interval: {interval}s)')

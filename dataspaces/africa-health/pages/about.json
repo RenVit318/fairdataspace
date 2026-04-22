@@ -1,0 +1,8 @@
+{
+  "section1_title": "The Africa Health Data Space",
+  "section1_body": "The Africa Health Data Space is a federated platform connecting health data across the African continent. It enables researchers, health professionals, and public health organizations to discover and request access to datasets held by partner institutions, under well-defined governance and access conditions.\n\nBy applying the FAIR (Findable, Accessible, Interoperable, Reusable) principles together with ownership, localisation, and regulatory compliance, the Data Space empowers local data stewards to keep control of their data while making it discoverable and reusable for legitimate research.\n\nThe Africa Health Data Space links data through FAIR Data Points (FDPs) that remain under the control of their respective organizations. This platform creates an overview of the datasets available across these FDPs and lets users request access or run queries — every request is routed to the data steward at the origin for approval.",
+  "partners_title": "Partners",
+  "partners_body": "VODAN-Africa\nAfrican University Network on FAIR Open Science (AUN-FOS)",
+  "contact_title": "Contact",
+  "contact_body": "For questions or more information, please reach out to the Africa Health Data Space team."
+}

@@ -4,6 +4,7 @@ import json
 import os
 import threading
 
+from flask import current_app, has_app_context
 from werkzeug.security import generate_password_hash, check_password_hash
 
 _lock = threading.Lock()
@@ -12,52 +13,25 @@ _lock = threading.Lock()
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 _ADMIN_FILE = os.path.join(_DATA_DIR, 'admin.json')
 
-# Default page content used on first run.
-_DEFAULT_PAGES = {
-    'home': {
-        'hero_title': 'Humanitarian Data Space',
-        'hero_subtitle': 'Find, explore, and request access to humanitarian datasets \u2014 all in one place',
-        'intro_title': 'What does this platform do?',
-        'intro_body': (
-            'The Humanitarian Data Space helps researchers and humanitarian organizations discover '
-            'datasets that are relevant to their work. Many valuable datasets exist across different '
-            'data repositories, but finding and accessing them can be difficult. This platform '
-            'brings them together.'
-        ),
-        'steps_title': 'How it works',
-        'step1_title': 'Connect to a data source',
-        'step1_body': 'Add the URL of a data repository. The platform will automatically discover all datasets it contains.',
-        'step2_title': 'Find relevant datasets',
-        'step2_body': 'Browse, search, and filter the discovered datasets to find the ones that match your needs.',
-        'step3_title': 'Request or query',
-        'step3_body': 'Add datasets to your basket and compose a data access request, or run queries directly on available endpoints.',
-    },
-    'about': {
-        'section1_title': 'The Humanitarian Data Space',
-        'section1_body': (
-            'The Humanitarian Data Space is an innovative initiative developed by the Europe External '
-            'Programme with Africa (EEPA) to collect, manage, and share sensitive data related to '
-            'vulnerable communities impacted by conflicts and humanitarian crises. This initiative aims '
-            'to enhance data visibility, ownership, and accessibility, ensuring that the voices of '
-            'marginalized groups are heard and considered.\n\n'
-            'The primary mission of the Humanitarian Data Space is to create a secure, federated '
-            'environment where data can be accessed under well-defined conditions. By employing the '
-            'FAIR-OLR (Findable, Accessible, Interoperable, Reusable \u2013 with Ownership, Localisation, '
-            'and Regulatory compliance) principles, the initiative seeks to empower local stakeholders, '
-            'human rights organizations, and healthcare professionals to use data effectively while '
-            'maintaining control and ownership.\n\n'
-            'The Humanitarian Data Space links data through FAIR Data Points (FDP), which are under '
-            'the control of their respective organizations. The Data Space creates an overview of the '
-            'data available in these FDPs. This website enables users to make requests for queries on '
-            'those datasets. The request will go to the contact point on the FDP and will be approved '
-            'or denied from there.'
-        ),
-        'partners_title': 'Partners',
-        'partners_body': 'VODAN-Africa\nAfrican University Network on FAIR Open Science (AUN-FOS)\nTangaza University',
-        'contact_title': 'Contact',
-        'contact_body': 'For questions or more information, please reach out to the team at HDS@eepa.be.',
-    },
-}
+
+def _load_default_pages():
+    """Load seed page content from the active dataspace's pages/ directory."""
+    if not has_app_context():
+        return {}
+    ds_dir = current_app.config.get('DATASPACE_DIR')
+    if not ds_dir:
+        return {}
+    pages_dir = os.path.join(ds_dir, 'pages')
+    if not os.path.isdir(pages_dir):
+        return {}
+    defaults = {}
+    for entry in os.listdir(pages_dir):
+        if not entry.endswith('.json'):
+            continue
+        key = entry[:-5]
+        with open(os.path.join(pages_dir, entry), 'r') as f:
+            defaults[key] = json.load(f)
+    return defaults
 
 
 def _read_data():
@@ -88,7 +62,7 @@ def _ensure_admin():
             }
             _write_data(data)
         if 'pages' not in data:
-            data['pages'] = _DEFAULT_PAGES
+            data['pages'] = _load_default_pages()
             _write_data(data)
     return data
 
@@ -113,8 +87,9 @@ def change_admin_password(new_password):
 def get_page_content(page_key):
     """Return the editable content dict for a given page, or defaults."""
     data = _ensure_admin()
-    pages = data.get('pages', _DEFAULT_PAGES)
-    return pages.get(page_key, _DEFAULT_PAGES.get(page_key, {}))
+    defaults = _load_default_pages()
+    pages = data.get('pages', defaults)
+    return pages.get(page_key, defaults.get(page_key, {}))
 
 
 def save_page_content(page_key, content):
@@ -122,16 +97,16 @@ def save_page_content(page_key, content):
     with _lock:
         data = _ensure_admin()
         if 'pages' not in data:
-            data['pages'] = dict(_DEFAULT_PAGES)
+            data['pages'] = dict(_load_default_pages())
         data['pages'][page_key] = content
         _write_data(data)
 
 
 def get_all_page_keys():
     """Return a list of editable page keys."""
-    return list(_DEFAULT_PAGES.keys())
+    return list(_load_default_pages().keys())
 
 
 def get_default_fields(page_key):
     """Return the field names for a given page (used to build the edit form)."""
-    return _DEFAULT_PAGES.get(page_key, {})
+    return _load_default_pages().get(page_key, {})

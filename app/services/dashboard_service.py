@@ -8,6 +8,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from flask import current_app
+
 from app.config import Config
 from app.models.auth import EndpointCredentials
 from app.services.fdp_client import FDPClient, FDPError
@@ -126,7 +128,7 @@ def get_fdp_themes() -> List[Dict[str, Any]]:
             verify_ssl=Config.FDP_VERIFY_SSL,
         )
         dataset_service = DatasetService(fdp_client)
-        datasets = dataset_service.get_all_datasets(list(Config.DEFAULT_FDPS))
+        datasets = dataset_service.get_all_datasets(list(current_app.config.get('DEFAULT_FDPS', [])))
         themes = dataset_service.get_available_themes(datasets)
         return [{'label': t.label, 'uri': t.uri, 'count': t.count} for t in themes]
     except Exception as e:
@@ -223,7 +225,7 @@ def discover_endpoints() -> List[Dict[str, str]]:
     )
     dataset_service = DatasetService(fdp_client)
 
-    fdp_uris = list(Config.DEFAULT_FDPS)
+    fdp_uris = list(current_app.config.get('DEFAULT_FDPS', []))
 
     # Also include any FDP URIs from existing config (manual additions)
     config = get_config()

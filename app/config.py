@@ -20,14 +20,7 @@ class Config:
     LOG_LEVEL: str = os.environ.get('LOG_LEVEL', 'INFO')
     FDP_VERIFY_SSL: bool = os.environ.get('FDP_VERIFY_SSL', 'false').lower() != 'false'
 
-    # Default FDP endpoints to include for new sessions
-    DEFAULT_FDPS: list = [
-        'https://fairdp.eepa.be',
-        'https://fdp.tangaza.ac.ke',
-        'https://mutuinifdp.tail1aac55.ts.net',
-        'https://aku.edu.et',
-        'https://fdp.dhicenter.com',
-    ]
+    # DEFAULT_FDPS is supplied by the selected dataspace (see dataspaces/<name>/config.py).
 
     # SPARQL settings
     SPARQL_TIMEOUT: int = int(os.environ.get('SPARQL_TIMEOUT', 60))

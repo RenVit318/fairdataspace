@@ -1,0 +1,19 @@
+/* Humanitarian Data Space — EEPA theme */
+@import url('https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&family=Lato:wght@400;700&display=swap');
+
+:root {
+    --primary-color: #da931e;
+    --primary-hover: #c47f15;
+    --primary-light: #d8a552;
+    --primary-rgb: 218, 147, 30;
+
+    --accent-color: #1d3182;
+    --accent-hover: #162568;
+    --accent-rgb: 29, 49, 130;
+
+    --heading-font: 'Maven Pro', 'Lato', sans-serif;
+    --body-font: 'Lato', Arial, Helvetica, sans-serif;
+
+    --gradient-primary: linear-gradient(135deg, #da931e 0%, #e5a835 100%);
+    --gradient-accent: linear-gradient(135deg, #1d3182 0%, #2a45a0 100%);
+}

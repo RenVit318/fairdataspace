@@ -1,12 +1,70 @@
 """Flask application factory for the Data Visiting PoC."""
 
+import importlib.util
 import logging
 import os
 from typing import Optional, Dict, Any
 
-from flask import Flask
+from flask import Blueprint, Flask
+from jinja2 import ChoiceLoader, FileSystemLoader
 
 from app.config import Config
+
+
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DATASPACES_DIR = os.path.join(_REPO_ROOT, 'dataspaces')
+
+
+def _load_dataspace(app: Flask) -> None:
+    """Load the selected dataspace's config, static files, and template overrides."""
+    name = os.environ.get('DATASPACE', 'humanitarian')
+    ds_dir = os.path.join(_DATASPACES_DIR, name)
+
+    if not os.path.isdir(ds_dir):
+        raise RuntimeError(
+            f"Dataspace '{name}' not found at {ds_dir}. "
+            f"Available: {sorted(os.listdir(_DATASPACES_DIR))}"
+        )
+
+    config_path = os.path.join(ds_dir, 'config.py')
+    spec = importlib.util.spec_from_file_location(f'dataspace_{name}', config_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for key in dir(module):
+        if key.isupper():
+            app.config[key] = getattr(module, key)
+
+    app.config['DATASPACE'] = name
+    app.config['DATASPACE_DIR'] = ds_dir
+
+    ds_static = os.path.join(ds_dir, 'static')
+    if os.path.isdir(ds_static):
+        ds_bp = Blueprint(
+            'dataspace_static',
+            __name__,
+            static_folder=ds_static,
+            static_url_path='/dataspace-static',
+        )
+        app.register_blueprint(ds_bp)
+
+    ds_templates = os.path.join(ds_dir, 'templates')
+    if os.path.isdir(ds_templates):
+        app.jinja_loader = ChoiceLoader([
+            FileSystemLoader(ds_templates),
+            app.jinja_loader,
+        ])
+
+    @app.context_processor
+    def _inject_site_config():
+        return {
+            'site': {
+                'name': app.config.get('SITE_NAME', ''),
+                'tagline': app.config.get('SITE_TAGLINE', ''),
+                'contact_email': app.config.get('CONTACT_EMAIL', ''),
+                'brand_logos': app.config.get('BRAND_LOGOS', []),
+                'dataspace': name,
+            }
+        }
 
 
 def _seed_default_fdps(session) -> None:
@@ -57,7 +115,10 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
     # Load configuration
     app.config.from_object(Config)
 
-    # Apply any overrides
+    # Load the selected dataspace (branding, default FDPs, static, templates)
+    _load_dataspace(app)
+
+    # Apply any overrides (tests pass overrides last so they win)
     if config_override:
         app.config.update(config_override)
 

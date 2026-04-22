@@ -1,0 +1,8 @@
+{
+  "section1_title": "The Humanitarian Data Space",
+  "section1_body": "The Humanitarian Data Space is an innovative initiative developed by the Europe External Programme with Africa (EEPA) to collect, manage, and share sensitive data related to vulnerable communities impacted by conflicts and humanitarian crises. This initiative aims to enhance data visibility, ownership, and accessibility, ensuring that the voices of marginalized groups are heard and considered.\n\nThe primary mission of the Humanitarian Data Space is to create a secure, federated environment where data can be accessed under well-defined conditions. By employing the FAIR-OLR (Findable, Accessible, Interoperable, Reusable – with Ownership, Localisation, and Regulatory compliance) principles, the initiative seeks to empower local stakeholders, human rights organizations, and healthcare professionals to use data effectively while maintaining control and ownership.\n\nThe Humanitarian Data Space links data through FAIR Data Points (FDP), which are under the control of their respective organizations. The Data Space creates an overview of the data available in these FDPs. This website enables users to make requests for queries on those datasets. The request will go to the contact point on the FDP and will be approved or denied from there.",
+  "partners_title": "Partners",
+  "partners_body": "VODAN-Africa\nAfrican University Network on FAIR Open Science (AUN-FOS)\nTangaza University",
+  "contact_title": "Contact",
+  "contact_body": "For questions or more information, please reach out to the team at HDS@eepa.be."
+}
