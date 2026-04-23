@@ -1,6 +1,6 @@
 """Main routes for the fairdataspace application."""
 
-from flask import Blueprint, render_template, session
+from flask import Blueprint, current_app, render_template, session
 
 from app.services.admin_service import get_page_content
 
@@ -10,13 +10,16 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Render the landing page."""
-    fdp_count = len(session.get('fdps', {}))
+    fdp_uris = session.get('fdp_uris', [])
+    fdp_count = len(fdp_uris)
     basket_count = len(session.get('basket', []))
-    datasets_cache = session.get('datasets_cache', [])
-    # None means "not fetched yet this session" so the template shows an em dash.
+
+    cache = current_app.fdp_cache
+    datasets = cache.get_datasets_for_fdps(fdp_uris)
+    # None means "no datasets in cache yet" so the template shows an em dash.
     distribution_count = (
-        sum(ds.get('distribution_count', 0) for ds in datasets_cache)
-        if datasets_cache else None
+        sum(len(ds.get('distributions') or []) for ds in datasets)
+        if datasets else None
     )
     content = get_page_content('home')
 

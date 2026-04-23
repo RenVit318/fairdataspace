@@ -67,39 +67,6 @@ def _load_dataspace(app: Flask) -> None:
         }
 
 
-def _seed_default_fdps(session) -> None:
-    """Populate a new session with the configured default FDP endpoints."""
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    from flask import current_app
-    from app.services import FDPClient
-    from app.utils import get_uri_hash
-
-    default_uris = current_app.config.get('DEFAULT_FDPS', [])
-    if not default_uris:
-        return
-
-    client = FDPClient(
-        timeout=current_app.config.get('FDP_TIMEOUT', 30),
-        verify_ssl=current_app.config.get('FDP_VERIFY_SSL', True),
-    )
-
-    def _fetch(uri):
-        try:
-            return client.fetch_fdp(uri)
-        except Exception as e:
-            logging.getLogger(__name__).warning(f"Could not fetch default FDP {uri}: {e}")
-            return None
-
-    with ThreadPoolExecutor(max_workers=len(default_uris)) as pool:
-        futures = {pool.submit(_fetch, uri): uri for uri in default_uris}
-        for future in as_completed(futures):
-            fdp = future.result()
-            if fdp:
-                session['fdps'][get_uri_hash(fdp.uri)] = fdp.to_dict()
-
-    session.modified = True
-
-
 def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
     """
     Create and configure the Flask application.
@@ -151,18 +118,41 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(dashboard_bp)
 
+    # Initialize process-wide FDP cache
+    from app.services import FDPCache
+    app.fdp_cache = FDPCache(app.config)
+
+    # Populate cache and start background refresh (skip in tests; guard Werkzeug reloader)
+    if not app.config.get('TESTING'):
+        is_reloader_parent = (
+            app.debug and os.environ.get('WERKZEUG_RUN_MAIN') != 'true'
+        )
+        if not is_reloader_parent:
+            app.fdp_cache.populate_defaults()
+            app.fdp_cache.start_background_refresh()
+
     # Initialize session defaults
     @app.before_request
     def init_session():
-        from flask import session
-        if 'fdps' not in session:
-            session['fdps'] = {}
-            # Seed default FDPs for new sessions
-            _seed_default_fdps(session)
+        from flask import session, current_app
+
+        # Migrate legacy session['fdps'] (dict of full FDP data) → session['fdp_uris'] (list).
+        if 'fdp_uris' not in session:
+            if 'fdps' in session and isinstance(session['fdps'], dict):
+                session['fdp_uris'] = [
+                    v['uri'] for v in session['fdps'].values()
+                    if isinstance(v, dict) and v.get('uri')
+                ]
+            else:
+                default_uris = current_app.config.get('DEFAULT_FDPS', []) or []
+                session['fdp_uris'] = list(default_uris)
+
+        # Drop legacy session keys that are now replaced by the process-wide cache.
+        session.pop('fdps', None)
+        session.pop('datasets_cache', None)
+
         if 'basket' not in session:
             session['basket'] = []
-        if 'datasets_cache' not in session:
-            session['datasets_cache'] = []
         if 'endpoint_credentials' not in session:
             session['endpoint_credentials'] = {}
         if 'discovered_endpoints' not in session:

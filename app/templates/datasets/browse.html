@@ -14,9 +14,17 @@
                 No datasets available
             {% endif %}
         </span>
-        <form action="{{ url_for('datasets.refresh') }}" method="POST" style="display: inline;">
-            <button type="submit" class="btn btn-secondary btn-sm">Refresh Datasets</button>
-        </form>
+        <div style="display: inline-flex; align-items: center; gap: 0.75rem;">
+            {% if cache_info and cache_info.last_updated %}
+            <span class="cache-freshness" style="color: #666; font-size: 0.9em;"
+                  title="Data is refreshed automatically in the background.">
+                Last updated: {{ cache_info.last_updated.strftime('%Y-%m-%d %H:%M') }} UTC
+            </span>
+            {% endif %}
+            <form action="{{ url_for('datasets.refresh') }}" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-secondary btn-sm">Refresh Datasets</button>
+            </form>
+        </div>
     </div>
 
     <div class="filters">

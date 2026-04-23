@@ -16,6 +16,7 @@ from app.services.sparql_client import (
     SPARQLAuthError,
     SPARQLQueryError,
 )
+from app.services.cache import FDPCache, FDPCacheEntry
 from app.services import dashboard_service
 
 __all__ = [
@@ -32,5 +33,7 @@ __all__ = [
     'SPARQLConnectionError',
     'SPARQLAuthError',
     'SPARQLQueryError',
+    'FDPCache',
+    'FDPCacheEntry',
     'dashboard_service',
 ]

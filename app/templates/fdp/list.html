@@ -17,9 +17,16 @@
 <div class="card">
     <div class="card-header">
         <span class="card-title">Connected FDPs ({{ fdps|length }})</span>
-        {% if is_admin %}
-        <a href="{{ url_for('fdp.add') }}" class="btn btn-primary btn-sm">Add FDP</a>
-        {% endif %}
+        <div style="display: inline-flex; align-items: center; gap: 0.75rem;">
+            {% if cache_info and cache_info.last_updated %}
+            <span class="cache-freshness" style="color: #666; font-size: 0.9em;">
+                Last updated: {{ cache_info.last_updated.strftime('%Y-%m-%d %H:%M') }} UTC
+            </span>
+            {% endif %}
+            {% if is_admin %}
+            <a href="{{ url_for('fdp.add') }}" class="btn btn-primary btn-sm">Add FDP</a>
+            {% endif %}
+        </div>
     </div>
     <div class="card-body">
         {% if fdps %}

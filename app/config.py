@@ -25,6 +25,9 @@ class Config:
     # SPARQL settings
     SPARQL_TIMEOUT: int = int(os.environ.get('SPARQL_TIMEOUT', 60))
 
+    # Cache settings
+    CACHE_REFRESH_INTERVAL: int = int(os.environ.get('CACHE_REFRESH_INTERVAL', 300))
+
     # Dashboard settings
     DASHBOARD_SPARQL_USERNAME: str = os.environ.get('DASHBOARD_SPARQL_USERNAME', '')
     DASHBOARD_SPARQL_PASSWORD: str = os.environ.get('DASHBOARD_SPARQL_PASSWORD', '')

@@ -285,14 +285,36 @@ class TestFullWorkflow:
 class TestSessionPersistence:
     """Test session data persistence across requests."""
 
-    def test_fdp_persists_in_session(self, client):
-        """Test that FDP data persists in session."""
-        with client.session_transaction() as sess:
-            sess['fdps'] = {'hash123': {'uri': 'https://example.org', 'title': 'Test'}}
+    def test_fdp_persists_in_session(self, client, app):
+        """FDP URIs live in the session; titles are looked up from the process-wide cache."""
+        from app.services.cache import FDPCacheEntry
+        from datetime import datetime
 
-        response = client.get('/fdp/')
-        assert response.status_code == 200
-        assert b'Test' in response.data
+        app.fdp_cache._entries['https://example.org'] = FDPCacheEntry(
+            fdp_dict={
+                'uri': 'https://example.org',
+                'title': 'Test',
+                'status': 'active',
+                'catalogs': [],
+                'linked_fdps': [],
+                'is_index': False,
+                'description': None,
+                'publisher': None,
+                'last_fetched': None,
+                'error_message': None,
+            },
+            datasets=[],
+            last_updated=datetime.utcnow(),
+        )
+        try:
+            with client.session_transaction() as sess:
+                sess['fdp_uris'] = ['https://example.org']
+
+            response = client.get('/fdp/')
+            assert response.status_code == 200
+            assert b'Test' in response.data
+        finally:
+            app.fdp_cache._entries.pop('https://example.org', None)
 
     def test_basket_persists_in_session(self, client):
         """Test that basket data persists in session."""
