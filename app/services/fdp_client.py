@@ -356,7 +356,7 @@ class FDPClient:
         # Try several predicates for the application homepage. Normalized so
         # catalogs hosted on different FDPs can be grouped as one application.
         catalog_homepage = None
-        for predicate in (FOAF.homepage, DCT.homepage, SCHEMA.url, DCAT.landingPage):
+        for predicate in (FOAF.homePage, FOAF.homepage, DCT.homepage, SCHEMA.url, DCAT.landingPage):
             for obj in graph.objects(catalog_uri_ref, predicate):
                 candidate = str(obj).strip()
                 if candidate:
